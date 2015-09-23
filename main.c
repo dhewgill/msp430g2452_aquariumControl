@@ -600,7 +600,7 @@ static inline void* setRtcTime(i2c_transaction_t* pI2cTrans, void* userData)
 		pI2cTrans->transactType = I2C_T_IDLE;
 		usi_i2c_release();										// Release USI.
 		lcd_release();											// Release LCD.
-		// Clear the system flag indicating set RTC time here...
+		gSysFlags &= ~SYSFLG_SET_RTC_DATETIME					// Done setting date and time, clear system flag.
 		state = 0;
 	}
 
