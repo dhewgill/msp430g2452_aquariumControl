@@ -559,7 +559,7 @@ static inline void* fetchRtcTime(i2c_transaction_t *pI2cTrans, void *userdata)
 		usi_i2c_get();											// Take the USI.
 		lcd_get();												// Take the LCD.
 		pI2cTrans->buf = gSysBuf;
-		pI2cTrans->callbackFn = displayRtcDataSM;
+		pI2cTrans->callbackFn = fetchRtcTime;
 		//ds3231m_get_time(pI2cTrans);
 		ds3231m_get_all(pI2cTrans);
 		usi_i2c_txrx_start(pI2cTrans);
@@ -572,6 +572,7 @@ static inline void* fetchRtcTime(i2c_transaction_t *pI2cTrans, void *userdata)
 		pI2cTrans->transactType = I2C_T_IDLE;
 		usi_i2c_release();										// Release USI.
 		lcd_release();											// Release LCD.
+		gSysFlags &= ~SYSFLG_FETCH_DATETIME; 					// Done getting the date and time, clear the system flag.
 		gSysFlags |= SYSFLG_DISP_DATETIME;						// Signal to the system that it's time to display an updated date and time.
 		state = 0;
 	}
