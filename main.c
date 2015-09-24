@@ -789,9 +789,27 @@ static void* putstr_to_lcd_int(i2c_transaction_t *i2c_trn, void *userdata)
  * update to the system.
  * A rotary encoder button press moves through the date/time and commits the time to the
  * RTC after updating the seconds.
+ *
+ * Pseudocode exploring:
+ * step 0: keep track of the variable that we need to update [and the final desired cursor position?]
+ * step 1: Update the proper field in the datetime struct.
+ * step 2: Turn off cursor blinking.
+ * step 3: Set SYSFLG_DISP_DATETIME to direct the system to display the updated date & time.
+ *         - or -
+ *         Call the screen update directly so we can pass our function as the
+ *         callback and get back into our state machine to reset the cursor position and to
+ *         re-enable cursor blinking.
+ * if we're not at the end of the state machine:
+ * step 4: Reset the cursor position.
+ * step 5: Set the cursor to blink.
+ * else:
+ * step 4: Direct the system to update the RTC with the new date and time.  Exit config
+ *         mode.
  ***************************************************************************************** */
 static inline void changeDateTimeUiSM(void)
 {
+	// Declaration of a constant function pointer table:
+	//const uint8_t (* const fnTbl[])(DateTime_t *, uint8_t) = {change_day_of_week, change_day_of_month, change_month, change_year, change_hour, change_minute, change_second};
 	static ui_dt_upd_sm_t state = UI_UPD_S_DAY;
 	static uint8_t (*fp)(DateTime_t *, uint8_t) = NULL;	// Pointer to a function that returns uint8_t
 														// and takes DateTime_t * and uint8_t args.
