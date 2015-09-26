@@ -809,9 +809,9 @@ static void* putstr_to_lcd_int(i2c_transaction_t *i2c_trn, void *userdata)
 static inline void changeDateTimeUiSM(void)
 {
 	// Declaration of a constant function pointer table:
-	//const uint8_t (* const fnTbl[])(DateTime_t *, uint8_t) = {change_day_of_week, change_day_of_month, change_month, change_year, change_hour, change_minute, change_second};
+	//const uint8_t (* const fnTbl[])(DateTime_t *, int8_t) = {change_day_of_week, change_day_of_month, change_month, change_year, change_hour, change_minute, change_second};
 	static ui_dt_upd_sm_t state = UI_UPD_S_DAY;
-	static uint8_t (*fp)(DateTime_t *, uint8_t) = NULL;	// Pointer to a function that returns uint8_t
+	static uint8_t (*fp)(DateTime_t *, int8_t) = NULL;	// Pointer to a function that returns uint8_t
 														// and takes DateTime_t * and uint8_t args.
 	// Set the cursor to the right spot.
 	switch (state)										// In this switch set the function pointer to the appropriate ui_update function.
