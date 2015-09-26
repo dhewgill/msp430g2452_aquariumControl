@@ -312,8 +312,15 @@ int main(void)
     		changeDateTimeUiSM();							// Call the UI update state machine.
     	}
 
-    	if ( (gSysFlags & sysFlagMask) && !usi_i2c_busy() && !lcd_busy() )	// The events wrapped in here all depend on the USI and LCD being free
-    	{																	// and are ordered more or less by priority/importance.
+    	// The events wrapped in here all depend on the USI and LCD being free
+    	// and are ordered more or less by priority/importance.
+    	// The if-else if structure guards against an isr setting a flag for a statemachine
+    	// that also requires the usi and lcd while we're 'inside' the outer if.
+    	// This way only one state machine or routine 'wins'.
+    	// If all of the flag cases were evaluated then there would be the potential for
+    	// one state machine to clobber the data for another.
+    	if ( (gSysFlags & sysFlagMask) && !usi_i2c_busy() && !lcd_busy() )
+    	{
     		if (gSysFlags & SYSFLG_SET_RTC_DATETIME)		// Write a new date and time to the RTC.
     		{
     			setRtcTime(&gsI2Ctransact, NULL);
