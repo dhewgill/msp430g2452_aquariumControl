@@ -695,8 +695,8 @@ static inline void* displayRtcDataSM(i2c_transaction_t *pI2cTrans, void *userdat
 /* *****************************************************************************************************************************************************
  * static void* putstr_to_lcd_int(i2c_transaction_t *i2c_trn, void *userdata)
  * i2c_transaction_t *i2c_trn: is a pointer to an i2c_transaction_t struct and will hold all of the transaction data.
- * void* userdata: ia a generic pointer used to transfer user defined info into the routine.  Currently used to point to a callback.
- * 					It is not typed so beware when typecasting!
+ * void* userdata: is a generic pointer used to transfer user defined info into the routine.  Currently used to point to a callback.
+ * 				   It is not typed so beware when typecasting!
  *
  * This function puts a string to the LCD for display.  The string must be null terminated.
  * This function may be called with a callback; in this case, when the string send is finished this routine will issue a STOP to I2C and register the
