@@ -377,7 +377,7 @@ static inline void init_timera0(void)
 {
 	TA0CTL = TASSEL_2 | MC_0 | TACLR;	// SMCLK; Timer stopped, Timer cleared.
 	TA0CCR0 = HS_SYSTICK_TIMER_VAL;		// Will allow for a 100us system tick at SMCLK = 16MHz. [62.5ns * 1600 = 100us].
-	TA0CCTL0 = CCIE;					// Compare match interrupt enabled for TA0.0.
+	//TA0CCTL0 = CCIE;					// Compare match interrupt enabled for TA0.0.
 }
 
 static inline void init_port1(void)
