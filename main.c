@@ -255,7 +255,7 @@ int main(void)
 	TA0CTL |= MC_2;											// Counter in continuous mode.
 	TA0CCTL0 = CCIE;										// Enable TimerA0_0 compare interrupt.
 
-    while (1)
+    for (;;)
     {
     	P1OUT ^= DBG_LED;
 
