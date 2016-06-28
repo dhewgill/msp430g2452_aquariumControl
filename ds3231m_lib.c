@@ -24,7 +24,7 @@ static void reset_addr_ptr_to_start(i2c_transaction_t* i2c_trn)
 static inline uint8_t ds3231m_get_regs(i2c_transaction_t* i2c_trn, uint8_t startReg, uint8_t numRegs)
 {
 	// The i2c buffer must be set by the caller.
-	if (RTC_SEC == startReg)
+	if (startReg == RTC_SEC)
 	{
 		i2c_trn->address = RTC_ADDR | I2C_READ_BIT;
 		i2c_trn->numBytes = numRegs;
@@ -135,7 +135,7 @@ void convert_array_to_datetime(uint8_t* msgBuf, DateTime_t* dt, uint8_t keepBcd)
 	dt->year = msgBuf[6];
 	dt->bcd_format = 1;
 
-	if (0 == keepBcd)
+	if (keepBcd == 0)
 	{
 		//convert to decimal.
 		convert_datetime_to_decimal(dt);
@@ -171,7 +171,7 @@ void convert_datetime_to_decimal(DateTime_t* dt)
 
 void convert_datetime_to_bcd(DateTime_t* dt)
 {
-	if (0 == dt->bcd_format)
+	if (dt->bcd_format == 0)
 	{
 		dt->seconds = decToBcd8(dt->seconds);
 		dt->minutes = decToBcd8(dt->minutes);
@@ -186,7 +186,7 @@ void convert_datetime_to_bcd(DateTime_t* dt)
 
 void ds3231m_set_time(DateTime_t* pdt, i2c_transaction_t* pi2ct)
 {
-	if (0 == pdt->bcd_format)				// Convert datetime to bcd, if necessary.
+	if (pdt->bcd_format == 0)				// Convert datetime to bcd, if necessary.
 	{
 		convert_datetime_to_bcd(pdt);
 	}
@@ -203,7 +203,7 @@ void ds3231m_set_time_dbg(DateTime_t* pdt, i2c_transaction_t* pi2ct)
 {
 	DateTime_t dt = {0x15, 0x45, 0x01, 0x02, 0x14, 0x02, 0x05, 0x01};	// Monday, 14-Feb-2005, 01:45:15, BCD format.
 	volatile uint8_t* bufptr = pi2ct->buf;
-	if (NULL == pdt)
+	if (pdt == NULL)
 		pdt = &dt;
 
 	pi2ct->buf[0] = RTC_SEC;

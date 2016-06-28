@@ -24,7 +24,7 @@ static inline void delay_us(uint16_t count)
 
 int lcd_busy(void)
 {
-	return ( 0 != (lcd_info.states & LCD_BUSY) );
+	return ( (lcd_info.states & LCD_BUSY) != 0 );
 }
 
 int lcd_get(void)
@@ -211,7 +211,7 @@ int lcd_set_backlight_int(int state, i2c_transaction_t *i2c_trans)
 	if (usi_i2c_busy())
 		return 0;									// I2C is busy.  <-- Probably don't need to check this as the caller(s) should have already checked.
 
-	lcd_info.states = (lcd_info.states & ~LCD_BACKLIGHT_STATE) | ((0 == state) ? 0 : LCD_BACKLIGHT_STATE);
+	lcd_info.states = (lcd_info.states & ~LCD_BACKLIGHT_STATE) | ((state == 0) ? 0 : LCD_BACKLIGHT_STATE);
 	i2c_trans->address = IO_EXPANDER_ADDR;
 	i2c_trans->buf[0] = IO_EXP_IO_REG;
 	i2c_trans->buf[1] = (lcd_info.states & LCD_BACKLIGHT_STATE) << (BACKLIGHT_PORT - LCD_BACKLIGHT_STATE - 1);

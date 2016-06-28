@@ -18,7 +18,7 @@ static uint8_t change_param(uint8_t param, int8_t dir, const uint8_t lbound, con
 	}
 	else if (param == ubound)
 	{
-		return ((0 < dir) ? lbound : ubound - 1);
+		return ((dir > 0) ? lbound : ubound - 1);
 	}
 	return 0xff;	// something went wrong.
 }

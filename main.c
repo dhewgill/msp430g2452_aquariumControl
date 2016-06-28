@@ -262,7 +262,7 @@ int main(void)
     	if (usi_i2c_check_event())							// The USI has woken the system in response to some I2C action needing attention.
     	{
     		usi_i2c_clear_event();
-    		if (NULL == gsI2Ctransact.callbackFn)			// Check if there's a callback to follow.
+    		if (gsI2Ctransact.callbackFn == NULL)			// Check if there's a callback to follow.
     		{
     			usi_i2c_release();							// Release the USI and LCD since no callback.
     			lcd_release();
@@ -450,7 +450,7 @@ static inline int sysIsIdle(void)
 {
 	//const uint16_t sysFlgChk = SYSFLG_RENC_BTN_SHRT | SYSFLG_RENC_BTN_LNG | SYSFLG_RENC_ROT_EVENT;
 	//return  !(usi_i2c_check_event());
-	return ( !(usi_i2c_check_event()) || (0 == (gSysFlags & ~(SYSFLG_ASYNCSYSEVENT | SYSFLG_SYNCSYSEVENT))) );
+	return ( !(usi_i2c_check_event()) || ((gSysFlags & ~(SYSFLG_ASYNCSYSEVENT | SYSFLG_SYNCSYSEVENT)) == 0) );
 }
 
 static int set_lcd_backlight(uint8_t state, i2c_transaction_t *i2c_trn)
@@ -493,7 +493,7 @@ static void* drawNrmModeStaticData(i2c_transaction_t *pI2cTrans, void *userdata)
 	case DISP_NORM_START:
 		usi_i2c_get();												// Take the USI.
 		lcd_get();													// Take the LCD.
-		myCallback = (NULL == userdata) ? NULL : (i2c_callback_fnptr_t)userdata;
+		myCallback = (userdata == NULL) ? NULL : (i2c_callback_fnptr_t)userdata;
 		//Clear screen?
 		state = DISP_NORM_LINE1;
 		// If not clear screen then can probably fall through.
@@ -591,7 +591,7 @@ static inline void* setRtcTime(i2c_transaction_t* pI2cTrans, void* userData)
 {
 	static uint8_t state = 0;
 
-	if (0 == state)
+	if (state == 0)
 	{
 		usi_i2c_get();											// Take the USI.
 		lcd_get();												// Take the LCD.
@@ -618,7 +618,7 @@ static inline void* displayRtcDataSM(i2c_transaction_t *pI2cTrans, void *userdat
 {
 	static uint8_t state = 0;
 
-	if (0 == state)										// Display the date.
+	if (state == 0)										// Display the date.
 	{
 		usi_i2c_get();									// Take the USI.
 		lcd_get();										// Take the LCD.
@@ -721,7 +721,7 @@ static void* putstr_to_lcd_int(i2c_transaction_t *i2c_trn, void *userdata)
 	case LCD_P_SM_SEND_START:
 		usi_i2c_get();									// Take the USI.  <-- Might not be necessary; the caller should have already taken care of this.
 		lcd_get();										// Take the LCD.  <-- See above.
-		myCallback = (NULL == userdata) ? NULL : (i2c_callback_fnptr_t)userdata;
+		myCallback = (userdata == NULL) ? NULL : (i2c_callback_fnptr_t)userdata;
 		bufIndx = 0;
 		gTmpBuf[0] = IO_EXP_IO_REG;
 		i2c_trn->address = IO_EXPANDER_ADDR;
@@ -762,7 +762,7 @@ static void* putstr_to_lcd_int(i2c_transaction_t *i2c_trn, void *userdata)
 		}
 		break;
 	case LCD_P_SM_END:
-		if (NULL != myCallback)
+		if (myCallback != NULL)
 		{
 			i2c_trn->callbackFn = myCallback;
 			usi_i2c_raise_event();				// Re-raise the I2C system event and keep the USI and LCD.
@@ -928,7 +928,7 @@ uint8_t* itoa(int16_t value, uint8_t *result, uint8_t base)
 uint8_t* utoa(uint16_t value, uint8_t *result, uint8_t base)
 {
 	// check that the base is valid
-	if ( (2 > base) || (36 < base) )
+	if ( (base < 2) || (base > 36) )
 	{
 		*result = '\0';
 		return result;
@@ -1058,12 +1058,12 @@ __interrupt void PORT2_ISR(void)
 	// 0.1uF ceramic capacitors + internal port pullups used - seems to work well.
 	// Note that if sigB != Px.1 and sigA != Px.0 then shifts need to be incorporated.
 	state |= P2IN & (RENC_SIGB | RENC_SIGA);
-	if (cw_seq == state)
+	if (state == cw_seq)
 	{
 		gSysFlags |= (SYSFLG_RENC_ROT_EVENT | SYSFLG_RENC_DIR);
 		wake = 1;
 	}
-	else if (ccw_seq == state)
+	else if (state == ccw_seq)
 	{
 		gSysFlags = (gSysFlags | SYSFLG_RENC_ROT_EVENT) & ~SYSFLG_RENC_DIR;
 		wake = 1;
@@ -1100,10 +1100,10 @@ __interrupt void TIMER0_A0_ISR(void)
 
 	if (gSysFlags & SYSFLG_LCD_BTN_DBNCE)				// Debouncing the LCD backlight button.
 	{
-		if (0 == --gAsyncBtnDebounceCounter)
+		if (--gAsyncBtnDebounceCounter == 0)
 		{
 			gSysFlags &= ~SYSFLG_LCD_BTN_DBNCE;			// Not debouncing any more.
-			if ( 0 == (P1IN & LCD_BL_BTN) )				// If button is still pressed [active low!].
+			if ( (P1IN & LCD_BL_BTN) == 0 )				// If button is still pressed [active low!].
 			{
 				gSysFlags |= SYSFLG_LCD_BACKLIGHT;		// Signal a backlight change event to the system.
 				wake = 1;								// Wake up.
@@ -1116,10 +1116,10 @@ __interrupt void TIMER0_A0_ISR(void)
 	// Note that we either debounce the rotary encoder pushbutton or check for short or long press, but not both.
 	if (gSysFlags & SYSFLG_RENC_BTN_DBNCE)				// Debouncing the rotary encoder pushbutton.
 	{
-		if (0 == --gRencBtnDebounceCounter)
+		if (--gRencBtnDebounceCounter == 0)
 		{
 			gSysFlags &= ~SYSFLG_RENC_BTN_DBNCE;		// Debounce timer expired so stop debouncing.
-			if ( 0 == (P1IN & RENC_BTN) )				// Only raise "button down" if the input is 0.  Note that if the button is released while there is an active "button down" flag then this won't clobber that.
+			if ( (P1IN & RENC_BTN) == 0 )				// Only raise "button down" if the input is 0.  Note that if the button is released while there is an active "button down" flag then this won't clobber that.
 			{											// However, there will be an additional delay in detecting the button press from the edge of the first bounce to the edge of the last bounce +30ms.
 				gSysFlags |= SYSFLG_RENC_BTN_DN;		// Set the rotary encoder button down flag.
 			}
@@ -1155,7 +1155,7 @@ __interrupt void TIMER0_A0_ISR(void)
 		}
 	}
 
-	if (0 == --syncEventCounter)
+	if (--syncEventCounter == 0)
 	{
 		syncEventCounter = SYNC_EVENT_COUNTER;			// Reload the synchronous event counter.
 		gSysFlags |= SYSFLG_SYNCSYSEVENT;				// Send signal to main to handle sync event.

@@ -38,11 +38,11 @@ static volatile i2c_transaction_t	*i2c_transact;
 // Function Definitions
 
 //Inline primitives.
-static inline void load_count(uint8_t theCount)
+static inline void load_count(uint8_t bit_count)
 {
 	//USICNT = (0xe0 & USICNT) | theCount;
 	//USICNT = theCount;
-	USICNT |= theCount;
+	USICNT |= bit_count;
 }
 
 static inline void start(void)
@@ -71,7 +71,7 @@ static inline uint8_t get_rx_byte(void)
 
 static inline void prep_stop(int stop)
 {
-	USISRL = (0 == stop) ? 0xff : 0x7f;				// msb = 0 for stop or 1 for restart.
+	USISRL = (stop == 0) ? 0xff : 0x7f;				// msb = 0 for stop or 1 for restart.
 	USICTL0 |= USIOE;								// SDA = output.
 	load_count(1);									// Shift out one bit.
 }
@@ -98,7 +98,7 @@ static inline void send_ack_nack(int nack)
 {
 	// Now generate N/ACK.
 	USICTL0 |= USIOE;								// SDA output.
-	USISRL = (0 == nack) ? 0 : 0xff;				// Load shift register with ack or nack.
+	USISRL = (nack == 0) ? 0 : 0xff;				// Load shift register with ack or nack.
 	load_count(1);									// Shift out 1 bit.
 }
 
@@ -125,7 +125,7 @@ void usi_i2c_master_init(uint8_t usiClkSrc, uint8_t usiClkDiv)
 
 int usi_i2c_busy(void)
 {
-	return ( 0 != (usi_i2c_sys_info.flags & USI_BUSY) );
+	return ( (usi_i2c_sys_info.flags & USI_BUSY) != 0 );
 }
 
 int usi_i2c_get(void)
@@ -151,7 +151,7 @@ void usi_i2c_clear_event(void)
 
 int usi_i2c_check_event(void)
 {
-	return ( 0 != (usi_i2c_sys_info.flags & USI_I2C_EVENT_SIG) );
+	return ( (usi_i2c_sys_info.flags & USI_I2C_EVENT_SIG) != 0 );
 }
 
 enum_usi_i2c_errors_t usi_i2c_get_error(void)
@@ -185,7 +185,7 @@ void usi_i2c_txrx_stop(i2c_transaction_t *psI2cTransact)
 
 int usi_i2c_txrx_start(i2c_transaction_t *psI2cTransact)
 {
-	if (NULL != psI2cTransact)
+	if (psI2cTransact != NULL)
 	{
 		i2c_transact = psI2cTransact;
 		//i2c_transact->state = I2C_S_START;
@@ -312,7 +312,7 @@ __interrupt void USI_TXRX(void)
 			}
 			else
 			{
-				if (I2C_T_RX_WAIT == i2c_transact->transactType)
+				if (i2c_transact->transactType == I2C_T_RX_WAIT)
 				{
 					state = I2C_S_RX_BYTE;				// Assume that whatever's holding the i2c will need to get more.
 					usi_i2c_sys_info.flags |= USI_I2C_EVENT_SIG;
@@ -347,10 +347,10 @@ __interrupt void USI_TXRX(void)
 			}
 			else if (0 < i2c_transact->numBytes)
 			{
-				state = ((0 == rxFlag) ? I2C_S_TX_BYTE : I2C_S_RX_BYTE);
+				state = ((rxFlag == 0) ? I2C_S_TX_BYTE : I2C_S_RX_BYTE);
 				//state = ( ((i2c_transact->addr & I2C_READ_BIT) == 0) ? I2C_S_TX_BYTE : I2C_S_RX_BYTE );
 			}
-			else if (I2C_T_TX_WAIT == i2c_transact->transactType)
+			else if (i2c_transact->transactType == I2C_T_TX_WAIT)
 			{
 				state = I2C_S_TX_BYTE;									// Assume that whatever's holding the i2c will need to send more.
 				usi_i2c_sys_info.flags |= USI_I2C_EVENT_SIG;
@@ -366,7 +366,7 @@ __interrupt void USI_TXRX(void)
 	case I2C_S_PREP_STOP:
 	{
 		int uStop = 0;
-		if (I2C_T_TX_RESTART > i2c_transact->transactType)
+		if (i2c_transact->transactType < I2C_T_TX_RESTART)
 		{
 			uStop = 1;
 			state = I2C_S_STOP;
@@ -442,24 +442,24 @@ __interrupt void USI_TXRX(void)
 		// Fall through...
 	case I2C_S_PREP_ACK_NACK:
 		prep_ack_nack();
-		state = (I2C_S_PREP_ACK_NACK_ADDR == state) ? I2C_S_ACK_NACK_ADDR : I2C_S_ACK_NACK;
+		state = (state == I2C_S_PREP_ACK_NACK_ADDR) ? I2C_S_ACK_NACK_ADDR : I2C_S_ACK_NACK;
 		break;
 
 	case I2C_S_ACK_NACK_ADDR:
 		// Fall through...
 	case I2C_S_ACK_NACK:
-		if ( (0 == (i2c_transact->address & I2C_READ_BIT)) || (I2C_S_ACK_NACK_ADDR == state) )	//TX -> get N/ACK
+		if ( ((i2c_transact->address & I2C_READ_BIT) == 0) || (state == I2C_S_ACK_NACK_ADDR) )	//TX -> get N/ACK
 		{
 			if (get_ack_nack())
 			{
 				(I2C_S_ACK_NACK_ADDR == state) ? set_error(USI_I2C_ERR_NO_ACK_ON_ADDRESS) : set_error(USI_I2C_ERR_NO_ACK_ON_DATA);
 				state = I2C_S_PREP_STOP;
 			}
-			else if (0 < i2c_transact->numBytes)
+			else if (i2c_transact->numBytes > 0)
 			{
 				state = (i2c_transact->address & I2C_READ_BIT) ? I2C_S_RX_BYTE : I2C_S_TX_BYTE;
 			}
-			else if (I2C_T_TX_WAIT == i2c_transact->transactType)
+			else if (i2c_transact->transactType == I2C_T_TX_WAIT)
 			{
 				state = I2C_S_TX_BYTE;									// Assume that whatever's holding the i2c will need to send more.
 				usi_i2c_sys_info.flags |= USI_I2C_EVENT_SIG;
@@ -471,16 +471,16 @@ __interrupt void USI_TXRX(void)
 		}
 		else											// RX -> get data and send N/ACK
 		{
-			int ackNack = 0;
+			int ack_nack = 0;
 			*i2c_transact->buf = get_rx_byte();
-			if (0 < i2c_transact->numBytes)
+			if (i2c_transact->numBytes > 0)
 			{
 				state = I2C_S_RX_BYTE;
 				i2c_transact->buf++;
 			}
 			else
 			{
-				if (I2C_T_RX_WAIT == i2c_transact->transactType)
+				if (i2c_transact->transactType == I2C_T_RX_WAIT)
 				{
 					state = I2C_S_RX_BYTE;				// Assume that whatever's holding the i2c will need to get more.
 					usi_i2c_sys_info.flags |= USI_I2C_EVENT_SIG;
@@ -489,18 +489,18 @@ __interrupt void USI_TXRX(void)
 				}										// Might be ok since the resume turns the interrupt back on and that will only go once the USI is ready.
 				else
 				{
-					ackNack = 0xff;
+					ack_nack = 0xff;
 					state = I2C_S_PREP_STOP;
 				}
 			}
-			send_ack_nack(ackNack);
+			send_ack_nack(ack_nack);
 		}
 		break;
 
 	case I2C_S_PREP_STOP:
 	{
 		int stop = 0;
-		if (I2C_T_TX_RESTART > i2c_transact->transactType)
+		if (i2c_transact->transactType < I2C_T_TX_RESTART)
 		{
 			stop = 1;
 			state = I2C_S_STOP;
