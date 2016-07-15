@@ -452,7 +452,7 @@ __interrupt void USI_TXRX(void)
 		{
 			if (get_ack_nack())
 			{
-				(I2C_S_ACK_NACK_ADDR == state) ? set_error(USI_I2C_ERR_NO_ACK_ON_ADDRESS) : set_error(USI_I2C_ERR_NO_ACK_ON_DATA);
+				(state == I2C_S_ACK_NACK_ADDR) ? set_error(USI_I2C_ERR_NO_ACK_ON_ADDRESS) : set_error(USI_I2C_ERR_NO_ACK_ON_DATA);
 				state = I2C_S_PREP_STOP;
 			}
 			else if (i2c_transact->numBytes > 0)
