@@ -509,7 +509,7 @@ static void* drawNrmModeStaticData(i2c_transaction_t *pI2cTrans, void *userdata)
 		state = DISP_NORM_END;
 		break;
 	case DISP_NORM_END:
-		if (NULL != myCallback)
+		if (myCallback != NULL)
 		{
 			pI2cTrans->callbackFn = myCallback;
 			usi_i2c_raise_event();									// Re-raise the I2C system event and keep the USI and LCD.
