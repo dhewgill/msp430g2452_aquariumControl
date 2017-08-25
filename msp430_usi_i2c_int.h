@@ -111,7 +111,7 @@ struct _i2c_transaction_t
 	volatile uint8_t					numBytes;			// uint8_t is ok as long as numBytes < 63 for LCD transfers.
 	volatile enum_i2c_transact_type_t	transactType;
 	i2c_callback_fnptr_t				callbackFn;
-	volatile uint8_t					*buf;
+	volatile uint8_t*					buf;
 };
 
 typedef union _usi_i2c_sys_info_t
