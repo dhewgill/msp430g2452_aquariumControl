@@ -470,7 +470,7 @@ static inline int wait_for_usi_finish(i2c_transaction_t *i2c_trn)
 	while ( usi_i2c_busy() )									// Wait for the USI [I2C] resources to be released.
 	{
 		usi_i2c_sleep_wait(1);									// Wait for wakeup by USI (I2C) only.
-		if (NULL != i2c_trn->callbackFn)						// Make sure we don't dereference a null pointer.
+		if (i2c_trn->callbackFn != NULL)						// Make sure we don't dereference a null pointer.
 			i2c_trn->callbackFn(i2c_trn, NULL);
 	}
 	return 0;
@@ -561,7 +561,7 @@ static inline void* fetchRtcTime(i2c_transaction_t *pI2cTrans, void *userdata)
 {
 	static uint8_t state = 0;
 
-	if (0 == state)
+	if (state == 0)
 	{
 		usi_i2c_get();											// Take the USI.
 		lcd_get();												// Take the LCD.
@@ -897,7 +897,7 @@ static int prep_str_for_lcd(uint8_t *theStr, uint8_t pos, uint8_t sz)
 uint8_t* itoa(int16_t value, uint8_t *result, uint8_t base)
 {
 	// check that the base is valid
-	if ( (2 > base) || (16 < base) )
+	if ( (base < 2) || (base > 16) )
 	{
 		*result = '\0';
 		return result;
