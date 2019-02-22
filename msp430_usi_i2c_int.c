@@ -305,7 +305,7 @@ __interrupt void USI_TXRX(void)
 		{
 			int ackNack = 0;
 			*i2c_transact->buf = get_rx_byte();
-			if (0 < i2c_transact->numBytes)
+			if (i2c_transact->numBytes > 0)
 			{
 				state = I2C_S_RX_BYTE;
 				i2c_transact->buf++;
